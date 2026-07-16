@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Personal Finance Dashboard</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <header class="header">
+        <img src="banner.jpg" alt="Finance Dashboard Banner" class="banner" />
+        <h1>Personal Finance Dashboard</h1>
+        <div id="bitcoin-price" class="bitcoin-price">Loading Bitcoin price...</div>
+    </header>
+    <main class="container">
+        <section class="balance-cards">
+            <div class="card">
+                <h2>Total Balance</h2>
+                <p class="amount" id="total-balance">$12,345.67</p>
+            </div>
+            <div class="card">
+                <h2>Monthly Income</h2>
+                <p class="amount">$4,500.00</p>
+            </div>
+            <div class="card">
+                <h2>Monthly Expenses</h2>
+                <p class="amount">$2,800.00</p>
+            </div>
+        </section>
+        <section class="transactions">
+            <h2>Recent Transactions</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Category</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2023-09-01</td>
+                        <td>Salary</td>
+                        <td>Income</td>
+                        <td class="positive">+$4,500.00</td>
+                    </tr>
+                    <tr>
+                        <td>2023-09-03</td>
+                        <td>Rent</td>
+                        <td>Housing</td>
+                        <td class="negative">-$1,200.00</td>
+                    </tr>
+                    <tr>
+                        <td>2023-09-05</td>
+                        <td>Groceries</td>
+                        <td>Food</td>
+                        <td class="negative">-$250.00</td>
+                    </tr>
+                    <tr>
+                        <td>2023-09-07</td>
+                        <td>Gym Membership</td>
+                        <td>Health</td>
+                        <td class="negative">-$50.00</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        <section class="chart">
+            <h2>Spending Overview</h2>
+            <div class="chart-placeholder">
+                <!-- Chart will be rendered here -->
+                <p>Chart Placeholder</p>
+            </div>
+        </section>
+    </main>
+    <script>
+        // Fetch Bitcoin price from backend and display it
+        fetch("/api/bitcoin_price")
+            .then(response => response.json())
+            .then(data => {
+                const price = data.bitcoin_usd;
+                const el = document.getElementById("bitcoin-price");
+                if (price !== undefined && price !== null) {
+                    el.textContent = `Bitcoin Price: $${price.toLocaleString()}`;
+                } else {
+                    el.textContent = "Bitcoin price unavailable";
+                }
+            })
+            .catch(err => {
+                document.getElementById("bitcoin-price").textContent = "Error loading Bitcoin price";
+                console.error(err);
+            });
+    </script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+
+[main 2026-07-16T03:55:09.855Z] Failed to load @vscode/policy-watcher:  Error: Could not locate the bindings file. Tried:
+ → D:\vscode_src\desktop\node_modules\.pnpm\@vscode+policy-watcher@1.4.0\node_modules\@vscode\policy-watcher\build\vscode-policy-watcher.node
+ → D:\vscode_src\desktop\node_modules\.pnpm\@vscode+policy-watcher@1.4.0\node_modules\@vscode\policy-watcher\build\Debug\vscode-policy-watcher.node
+ → D:\vscode_src\desktop\node_modules\.pnpm\@vscode+policy-watcher@1.4.0\node_modules\@vscode\policy-watcher\build\Release\vscode-policy-watcher.node
+ → D:\vscode_src\desktop\node_modules\.pnpm\@vscode+policy-watcher@1.4.0\node_modules\@vscode\policy-watcher\out\Debug\vscode-policy-watcher.node
+ → D:\vscode_src\desktop\node_modules\.pnpm\@vscode+policy-watcher@1.4.0\node_modules\@vscode\policy-watcher\Debug\vscode-policy-watcher.node
+ → D:\vscode_src\desktop\node_modules\.pnpm\@vscode+policy-watcher@1.4.0\node_modules\@vscode\policy-watcher\out\Release\vscode-policy-watcher.node
+ → D:\vscode_src\desktop\node_modules\.pnpm\@vscode+policy-watcher@1.4.0\node_modules\@vscode\policy-watcher\Release\vscode-policy-watcher.node
+ → D:\vscode_src\desktop\node_modules\.pnpm\@vscode+policy-watcher@1.4.0\node_modules\@vscode\policy-watcher\build\default\vscode-policy-watcher.node
+ → D:\vscode_src\desktop\node_modules\.pnpm\@vscode+policy-watcher@1.4.0\node_modules\@vscode\policy-watcher\compiled\24.18.0\win32\x64\vscode-policy-watcher.node
+ → D:\vscode_src\desktop\node_modules\.pnpm\@vscode+policy-watcher@1.4.0\node_modules\@vscode\policy-watcher\addon-build\release\install-root\vscode-policy-watcher.node
+ → D:\vscode_src\desktop\node_modules\.pnpm\@vscode+policy-watcher@1.4.0\node_modules\@vscode\policy-watcher\addon-build\debug\install-root\vscode-policy-watcher.node
+ → D:\vscode_src\desktop\node_modules\.pnpm\@vscode+policy-watcher@1.4.0\node_modules\@vscode\policy-watcher\addon-build\default\install-root\vscode-policy-watcher.node
+ → D:\vscode_src\desktop\node_modules\.pnpm\@vscode+policy-watcher@1.4.0\node_modules\@vscode\policy-watcher\lib\binding\node-v146-win32-x64\vscode-policy-watcher.node
+    at bindings (D:\vscode_src\desktop\node_modules\.pnpm\@vscode+policy-watcher@1.4.0\node_modules\@vscode\policy-watcher\node_modules\bindings\bindings.js:126:9)
+    at Object.<anonymous> (D:\vscode_src\desktop\node_modules\.pnpm\@vscode+policy-watcher@1.4.0\node_modules\@vscode\policy-watcher\index.js:6:44)
+    at Module._compile (node:internal/modules/cjs/loader:1879:14)
+    at Object..js (node:internal/modules/cjs/loader:2012:10)
+    at Module.load (node:internal/modules/cjs/loader:1601:32)
+    at node:internal/modules/cjs/loader:1403:12
+    at Module._load (node:electron/js2c/node_init:2:18095)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:262:19)
+    at loadCJSModuleWithModuleLoad (node:internal/modules/esm/translators:378:15)
+    at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:246:9)
+    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
+    at async node:internal/modules/esm/loader:643:26
+    at async NativePolicyService._updatePolicyDefinitions (file:///D:/vscode_src/desktop/out/vs/platform/policy/node/nativePolicyService.js:28:29)
+    at async NativePolicyService.updatePolicyDefinitions (file:///D:/vscode_src/desktop/out/vs/platform/policy/common/policy.js:39:7)
+    at async PolicyConfiguration.updatePolicyDefinitions (file:///D:/vscode_src/desktop/out/vs/platform/configuration/common/configurations.js:150:7)
+    at async PolicyConfiguration.initialize (file:///D:/vscode_src/desktop/out/vs/platform/configuration/common/configurations.js:102:17)
+    at async Promise.all (index 1)
+    at async ConfigurationService.initialize (file:///D:/vscode_src/desktop/out/vs/platform/configuration/common/configurationService.js:47:52)
+    at async Promise.all (index 2)
+    at async Object.settled (file:///D:/vscode_src/desktop/out/vs/base/common/async.js:1214:20)
+    at async CodeMain.initServices (file:///D:/vscode_src/desktop/out/vs/code/electron-main/main.js:223:5)
+    at async CodeMain.startup (file:///D:/vscode_src/desktop/out/vs/code/electron-main/main.js:84:9) {
+  tries: [
+    'D:\\vscode_src\\desktop\\node_modules\\.pnpm\\@vscode+policy-watcher@1.4.0\\node_modules\\@vscode\\policy-watcher\\build\\vscode-policy-watcher.node',
+    'D:\\vscode_src\\desktop\\node_modules\\.pnpm\\@vscode+policy-watcher@1.4.0\\node_modules\\@vscode\\policy-watcher\\build\\Debug\\vscode-policy-watcher.node',
+    'D:\\vscode_src\\desktop\\node_modules\\.pnpm\\@vscode+policy-watcher@1.4.0\\node_modules\\@vscode\\policy-watcher\\build\\Release\\vscode-policy-watcher.node',
+    'D:\\vscode_src\\desktop\\node_modules\\.pnpm\\@vscode+policy-watcher@1.4.0\\node_modules\\@vscode\\policy-watcher\\out\\Debug\\vscode-policy-watcher.node',
+    'D:\\vscode_src\\desktop\\node_modules\\.pnpm\\@vscode+policy-watcher@1.4.0\\node_modules\\@vscode\\policy-watcher\\Debug\\vscode-policy-watcher.node',
+    'D:\\vscode_src\\desktop\\node_modules\\.pnpm\\@vscode+policy-watcher@1.4.0\\node_modules\\@vscode\\policy-watcher\\out\\Release\\vscode-policy-watcher.node',
+    'D:\\vscode_src\\desktop\\node_modules\\.pnpm\\@vscode+policy-watcher@1.4.0\\node_modules\\@vscode\\policy-watcher\\Release\\vscode-policy-watcher.node',
+    'D:\\vscode_src\\desktop\\node_modules\\.pnpm\\@vscode+policy-watcher@1.4.0\\node_modules\\@vscode\\policy-watcher\\build\\default\\vscode-policy-watcher.node',
+    'D:\\vscode_src\\desktop\\node_modules\\.pnpm\\@vscode+policy-watcher@1.4.0\\node_modules\\@vscode\\policy-watcher\\compiled\\24.18.0\\win32\\x64\\vscode-policy-watcher.node',
+    'D:\\vscode_src\\desktop\\node_modules\\.pnpm\\@vscode+policy-watcher@1.4.0\\node_modules\\@vscode\\policy-watcher\\addon-build\\release\\install-root\\vscode-policy-watcher.node',
+    'D:\\vscode_src\\desktop\\node_modules\\.pnpm\\@vscode+policy-watcher@1.4.0\\node_modules\\@vscode\\policy-watcher\\addon-build\\debug\\install-root\\vscode-policy-watcher.node',
+    'D:\\vscode_src\\desktop\\node_modules\\.pnpm\\@vscode+policy-watcher@1.4.0\\node_modules\\@vscode\\policy-watcher\\addon-build\\default\\install-root\\vscode-policy-watcher.node',
+    'D:\\vscode_src\\desktop\\node_modules\\.pnpm\\@vscode+policy-watcher@1.4.0\\node_modules\\@vscode\\policy-watcher\\lib\\binding\\node-v146-win32-x64\\vscode-policy-watcher.node'
+  ]
+}
+[2508:0715/205538.730:ERROR:content\browser\network_service_instance_impl.cc:703] Network service crashed or was terminated, restarting service.
+[2508:0715/205538.758:ERROR:content\browser\gpu\gpu_process_host.cc:998] GPU process exited unexpectedly: exit_code=143

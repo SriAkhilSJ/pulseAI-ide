@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Pulse Agent — Flat Webview Blueprint (no glass, no raw tool names)</title>
+<style>
+  :root {
+    /* Real VS Code Dark+ token names/values -- flat, no blur, no
+       translucency layers. Every color below is a genuine VS Code theme
+       variable name a webview would actually receive via CSS custom
+       properties injected by the editor at runtime. */
+    --vscode-foreground: #cccccc;
+    --vscode-editor-background: #1e1e1e;
+    --vscode-sideBar-background: #252526;
+    --vscode-sideBarSectionHeader-background: #2b2b2b;
+    --vscode-panel-border: #3c3c3c;
+    --vscode-widget-border: #454545;
+    --vscode-button-background: #0e639c;
+    --vscode-button-hoverBackground: #1177bb;
+    --vscode-button-foreground: #ffffff;
+    --vscode-button-secondaryBackground: #3a3d41;
+    --vscode-button-secondaryForeground: #cccccc;
+    --vscode-input-background: #3c3c3c;
+    --vscode-input-foreground: #cccccc;
+    --vscode-input-border: #3c3c3c;
+    --vscode-input-placeholderForeground: #989898;
+    --vscode-textCodeBlock-background: #0a0a0a;
+    --vscode-debugIcon-startForeground: #89d185;
+    --vscode-charts-yellow: #cca700;
+    --vscode-charts-red: #f14c4c;
+    --vscode-charts-green: #89d185;
+    --vscode-charts-blue: #3794ff;
+    --vscode-descriptionForeground: #9d9d9d;
+    --vscode-focusBorder: #007fd4;
+    --vscode-badge-background: #4d4d4d;
+    --vscode-badge-foreground: #ffffff;
+    --vscode-list-hoverBackground: #2a2d2e;
+    --vscode-diffEditor-insertedTextBackground: rgba(155, 185, 85, 0.2);
+    --vscode-diffEditor-removedTextBackground: rgba(255, 0, 0, 0.2);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    background: #0d0d0d;
+    color: var(--vscode-foreground);
+    font-size: 13px;
+    display: flex;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  /* ============ VS Code window shell, for context ============ */
+  .vscode-shell {
+    width: 1180px;
+    height: 760px;
+    display: flex;
+    border: 1px solid #000;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .activity-bar {
+    width: 48px;
+    background: #333333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 10px;
+    gap: 20px;
+    flex-shrink: 0;
+  }
+  .activity-icon svg { width: 20px; height: 20px; opacity: 0.55; }
+  .activity-icon.active svg { opacity: 1; }
+  .activity-icon.active { border-left: 2px solid #fff; margin-left: -2px; padding-left: 2px; }
+  .editor-area {
+    flex: 1;
+    background: var(--vscode-editor-background);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .tab-bar {
+    height: 35px;
+    background: #252526;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    flex-shrink: 0;
+  }
+  .tab {
+    height: 100%;
+    padding: 0 14px;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12.5px; color: #969696;
+    border-right: 1px solid #1e1e1e;
+  }
+  .tab.active { background: #1e1e1e; color: #ffffff; }
+  .tab svg { width: 14px; height: 14px; }
+  .editor-body {
+    flex: 1;
+    padding: 16px 20px;
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+  }
+  .editor-body .kw { color: #569cd6; }
+  .editor-body .str { color: #ce9178; }
+  .editor-body .fn { color: #dcdcaa; }
+  .editor-body .comment { color: #6a9955; }
+
+  /* ================= FLAT PULSE AGENT PANEL (no glass) ================= */
+  .pulse-panel {
+    width: 390px;
+    flex-shrink: 0;
+    background: var(--vscode-sideBar-background);
+    border-left: 1px solid var(--vscode-panel-border);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  /* ---- Zone 1: Header ---- */
+  .pa-header {
+    flex-shrink: 0;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--vscode-sideBarSectionHeader-background);
+  }
+  .title-group { display: flex; align-items: center; gap: 8px; }
+  .pa-logo-badge {
+    width: 22px; height: 22px;
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--vscode-button-background);
+  }
+  .pa-logo-badge svg { width: 13px; height: 13px; }
+  .pa-header h1 {
+    font-size: 11.5px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: #e8e8e8;
+  }
+  .pa-status-pill {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 3px;
+    background: rgba(137, 209, 133, 0.12);
+    color: var(--vscode-debugIcon-startForeground);
+  }
+  .pa-status-pill.busy {
+    background: rgba(204, 167, 0, 0.14);
+    color: var(--vscode-charts-yellow);
+  }
+  .pa-status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .pa-status-pill.busy .pa-status-dot { animation: pulse 1.1s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
+  .pa-header-icons { display: flex; gap: 2px; margin-left: 8px; }
+  .icon-btn {
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 4px;
+    color: #cccccc;
+    cursor: pointer;
+  }
+  .icon-btn svg { width: 15px; height: 15px; }
+  .icon-btn:hover { background: rgba(255,255,255,0.08); }
+
+  /* ---- Zone 2: Provider / mission strip ---- */
+  .pa-substrip {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 10.5px;
+    color: var(--vscode-descriptionForeground);
+    border-bottom: 1px solid var(--vscode-panel-border);
+    background: rgba(255,255,255,0.02);
+  }
+  /* NOTE: provider chip intentionally does NOT print the raw internal
+     provider id ("groq"/"cerebras"/etc) either -- same identity-hiding
+     rule extended consistently: shown here as a neutral "Model A/B" style
+     label + a small colored dot, not the backend name. See callout note. */
+  .provider-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--vscode-descriptionForeground);
+  }
+  .provider-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--vscode-charts-blue); }
+  .mission-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: Consolas, monospace;
+    font-size: 10px;
+  }
+  .mission-chip svg { width: 11px; height: 11px; opacity: 0.7; }
+
+  /* ---- Zone 3: Thread ---- */
+  .pa-thread {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .pa-thread > * { flex-shrink: 0; }
+  .msg { display: flex; flex-direction: column; gap: 4px; }
+  .msg.user { align-items: flex-end; }
+  .msg.user .bubble {
+    background: var(--vscode-button-background);
+    color: #ffffff;
+    border-radius: 8px 8px 2px 8px;
+    padding: 7px 11px;
+    max-width: 85%;
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+  .msg.assistant .bubble {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 8px 8px 8px 2px;
+    padding: 8px 11px;
+    max-width: 92%;
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+  .msg.assistant .bubble code {
+    background: var(--vscode-textCodeBlock-background);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: Consolas, monospace;
+    font-size: 11.5px;
+    color: #b5cea8;
+  }
+
+  .thought-block {
+    display: flex; align-items: flex-start; gap: 7px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.02);
+    border-left: 2px solid var(--vscode-widget-border);
+    font-size: 11.5px;
+    color: var(--vscode-descriptionForeground);
+    font-style: italic;
+    max-width: 92%;
+  }
+  .thought-block svg { width: 13px; height: 13px; margin-top: 1px; flex-shrink: 0; opacity: 0.7; }
+
+  /* --- Action card: this is the REPLACEMENT for a raw tool-name card.
+     Shows a friendly verb + subject (from tool_labels.js), never the
+     underlying function name like write_file/run_command/grep_files. --- */
+  .action-card {
+    max-width: 94%;
+    border-radius: 6px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--vscode-panel-border);
+  }
+  .action-card-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 11px;
+    font-size: 12px;
+  }
+  .action-icon {
+    width: 18px; height: 18px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .action-icon svg { width: 11px; height: 11px; }
+  .action-icon.running { background: rgba(204,167,0,0.16); color: var(--vscode-charts-yellow); }
+  .action-icon.running svg { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .action-icon.done { background: rgba(137,209,133,0.16); color: var(--vscode-debugIcon-startForeground); }
+  .action-icon.error { background: rgba(241,76,76,0.16); color: var(--vscode-charts-red); }
+  .action-verb { color: #e8e8e8; font-weight: 600; }
+  .action-detail { color: var(--vscode-descriptionForeground); font-family: Consolas, monospace; font-size: 11px; }
+  .action-card-body {
+    padding: 8px 11px;
+    font-family: Consolas, monospace;
+    font-size: 11px;
+    color: #b5cea8;
+    white-space: pre-wrap;
+    max-height: 90px;
+    overflow-y: auto;
+    line-height: 1.5;
+    border-top: 1px solid var(--vscode-panel-border);
+  }
+  .action-diff {
+    padding: 7px 11px;
+    font-family: Consolas, monospace;
+    font-size: 11px;
+    border-top: 1px solid var(--vscode-panel-border);
+  }
+  .diff-line { padding: 1px 5px; border-radius: 2px; }
+  .diff-add { background: var(--vscode-diffEditor-insertedTextBackground); color: #b5cea8; }
+  .diff-del { background: var(--vscode-diffEditor-removedTextBackground); color: #f14c4c; text-decoration: line-through; }
+
+  /* --- Confirmation gate --- */
+  .confirm-card {
+    max-width: 94%;
+    border-radius: 6px;
+    overflow: hidden;
+    background: rgba(241,76,76,0.06);
+    border: 1px solid rgba(241,76,76,0.4);
+  }
+  .confirm-head {
+    display: flex; align-items: center; gap: 7px;
+    padding: 8px 11px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #ff8a8a;
+  }
+  .confirm-head svg { width: 15px; height: 15px; }
+  .confirm-body {
+    padding: 0 11px 8px;
+    font-size: 11.5px;
+    color: var(--vscode-descriptionForeground);
+    line-height: 1.5;
+  }
+  /* Note: the confirmation card DOES show the real command -- that's a
+     deliberate exception. Hiding tool identity is about not leaking
+     internal architecture during normal narration; it must NOT extend to
+     hiding what a risky action actually does when asking for approval --
+     that would defeat the entire purpose of a confirmation gate. */
+  .confirm-body code {
+    background: rgba(0,0,0,0.4);
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-family: Consolas, monospace;
+    color: #f14c4c;
+    display: inline-block;
+    margin-top: 4px;
+  }
+  .confirm-actions { display: flex; gap: 7px; padding: 0 11px 11px; }
+  .btn-approve, .btn-deny {
+    flex: 1;
+    padding: 6px 0;
+    border-radius: 4px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    border: none;
+  }
+  .btn-approve svg, .btn-deny svg { width: 12px; height: 12px; }
+  .btn-approve { background: var(--vscode-debugIcon-startForeground); color: #063; }
+  .btn-deny { background: transparent; border: 1px solid var(--vscode-charts-red); color: var(--vscode-charts-red); }
+
+  .checkpoint-marker {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 10px;
+    color: var(--vscode-descriptionForeground);
+    margin: 2px 0;
+  }
+  .checkpoint-marker svg { width: 11px; height: 11px; opacity: 0.6; }
+  .checkpoint-marker::before, .checkpoint-marker::after {
+    content: ""; flex: 1; height: 1px; background: var(--vscode-panel-border);
+  }
+
+  /* ---- Zone 4: capabilities drawer (renamed from "Available tools" --
+     "tools" already implies internal function names to some users; kept
+     here, but summary text avoids listing raw names, see body) ---- */
+  .pa-tools-drawer { flex-shrink: 0; border-top: 1px solid var(--vscode-panel-border); }
+  .pa-tools-summary {
+    padding: 6px 14px;
+    font-size: 11px;
+    color: var(--vscode-descriptionForeground);
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer;
+  }
+  .pa-tools-summary .left { display: flex; align-items: center; gap: 6px; }
+  .pa-tools-summary svg { width: 12px; height: 12px; }
+  .pa-tools-summary .count {
+    background: var(--vscode-badge-background);
+    color: var(--vscode-badge-foreground);
+    border-radius: 8px;
+    padding: 0 6px;
+    font-size: 10px;
+  }
+  .capability-list {
+    padding: 4px 14px 10px;
+    display: flex; flex-wrap: wrap; gap: 5px;
+  }
+  .capability-chip {
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.05);
+    color: var(--vscode-descriptionForeground);
+  }
+
+  /* ---- Zone 5: Composer ---- */
+  .pa-composer {
+    flex-shrink: 0;
+    padding: 10px 14px 12px;
+    border-top: 1px solid var(--vscode-panel-border);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .context-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+  .context-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 8px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 4px;
+    font-size: 10.5px;
+    font-family: Consolas, monospace;
+    color: var(--vscode-descriptionForeground);
+  }
+  .context-chip svg { width: 11px; height: 11px; }
+  .context-chip .x { cursor: pointer; opacity: 0.6; display:flex; }
+  .context-chip .x svg { width: 9px; height: 9px; }
+
+  .composer-box {
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 4px;
+    background: var(--vscode-input-background);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .composer-box:focus-within { border-color: var(--vscode-focusBorder); }
+  .composer-textarea {
+    background: transparent;
+    border: none;
+    color: var(--vscode-input-foreground);
+    padding: 8px 10px 4px;
+    font-size: 12.5px;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    min-height: 42px;
+  }
+  .composer-textarea::placeholder { color: var(--vscode-input-placeholderForeground); }
+  .composer-toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 4px 8px 6px;
+  }
+  .composer-toolbar-left { display: flex; gap: 4px; align-items: center; }
+  .mode-select {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10.5px;
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border-radius: 3px;
+    padding: 3px 7px;
+  }
+  .mode-select svg { width: 10px; height: 10px; }
+  .send-btn {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border: none;
+    border-radius: 3px;
+    padding: 5px 13px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .send-btn:hover { background: var(--vscode-button-hoverBackground); }
+  .send-btn svg { width: 12px; height: 12px; }
+  .hint { font-size: 10px; color: var(--vscode-descriptionForeground); text-align: right; padding: 0 2px; }
+
+  /* Annotation callout for this blueprint doc only */
+  .note {
+    position: absolute; z-index: 5;
+    background: #ffd866; color: #000; font-weight: 700; font-size: 10px;
+    padding: 3px 7px; border-radius: 3px; box-shadow: 0 2px 8px rgba(0,0,0,.5);
+    max-width: 220px; line-height: 1.4;
+  }
+</style>
+</head>
+<body>
+
+<div class="vscode-shell" style="position:relative;">
+  <div class="activity-bar">
+    <div class="activity-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7v11a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-8l-2-3H5a2 2 0 00-2 2z"/></svg></div>
+    <div class="activity-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+    <div class="activity-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="12" r="2.5"/><path d="M6 8.5V15.5M8.2 7.2L15.8 10.8M8.2 16.8L15.8 13.2"/></svg></div>
+    <div class="activity-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3l14 9-14 9V3z"/></svg></div>
+    <div class="activity-icon active"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7v8l10-12h-7z"/></svg></div>
+  </div>
+
+  <div class="editor-area">
+    <div class="tab-bar">
+      <div class="tab active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#569cd6" stroke-width="2"><path d="M9 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M18 2l4 4-10 10H8v-4z"/></svg>
+        app.py
+      </div>
+      <div class="tab">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#969696" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+        style.css
+      </div>
+    </div>
+    <div class="editor-body">
+      <span class="comment"># Flask backend for the finance dashboard</span><br/>
+      <span class="kw">from</span> flask <span class="kw">import</span> Flask, jsonify<br/><br/>
+      <span class="kw">@app.route</span>(<span class="str">'/api/balance'</span>)<br/>
+      <span class="kw">def</span> <span class="fn">api_balance</span>():<br/>
+      &nbsp;&nbsp;&nbsp;&nbsp;conn = get_db_connection()<br/>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># ... agent is editing this file live ...</span>
+    </div>
+  </div>
+
+  <!-- ================= FLAT PULSE AGENT PANEL ================= -->
+  <div class="pulse-panel">
+
+    <!-- Zone 1: Header -->
+    <div class="pa-header">
+      <div class="title-group">
+        <div class="pa-logo-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M13 2L3 14h7v8l10-12h-7z"/></svg>
+        </div>
+        <h1>Pulse Agent</h1>
+      </div>
+      <div style="display:flex; align-items:center;">
+        <div class="pa-status-pill busy">
+          <div class="pa-status-dot"></div>
+          Working
+        </div>
+        <div class="pa-header-icons">
+          <div class="icon-btn" title="New session">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          </div>
+          <div class="icon-btn" title="Session history">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+          </div>
+          <div class="icon-btn" title="Settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Zone 2: Provider / mission substrip -->
+    <div class="pa-substrip">
+      <span class="provider-chip"><span class="provider-dot"></span> Model A</span>
+      <span class="mission-chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        Finance Dashboard
+      </span>
+      <span>&nbsp;</span>
+    </div>
+
+    <!-- Zone 3: Thread -->
+    <div class="pa-thread">
+
+      <div class="msg user">
+        <div class="bubble">Fix the mobile overflow bug in the transactions table and verify at 375px.</div>
+      </div>
+
+      <div class="thought-block">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 00-4 12.7V17a1 1 0 001 1h6a1 1 0 001-1v-2.3A7 7 0 0012 2z"/><path d="M9 21h6"/></svg>
+        Looking at the stylesheet to find the transactions table rule before making a change...
+      </div>
+
+      <!-- Action card #1: read_file -- shown as "Read style.css", never "read_file(...)" -->
+      <div class="action-card">
+        <div class="action-card-head">
+          <div class="action-icon done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></div>
+          <span class="action-verb">Read</span>
+          <span class="action-detail">style.css</span>
+        </div>
+      </div>
+
+      <!-- Action card #2: write_file -- shown as "Edited style.css" + diff, never "write_file(...)" -->
+      <div class="action-card">
+        <div class="action-card-head">
+          <div class="action-icon done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></div>
+          <span class="action-verb">Edited</span>
+          <span class="action-detail">style.css</span>
+        </div>
+        <div class="action-diff">
+          <div class="diff-line diff-add">+ .transactions { overflow-x: auto; }</div>
+          <div class="diff-line diff-add">+ .transactions table { min-width: 500px; }</div>
+        </div>
+      </div>
+
+      <!-- Action card #3: test_local_html -- shown as "Previewing style.css", never "test_local_html(...)" -->
+      <div class="action-card">
+        <div class="action-card-head">
+          <div class="action-icon running"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 2a10 10 0 011 20"/></svg></div>
+          <span class="action-verb">Previewing</span>
+          <span class="action-detail">at 375px width</span>
+        </div>
+      </div>
+
+      <!-- Confirmation card: DOES show the real command (see CSS note above
+           on why this is a deliberate, narrow exception to the hide-identity
+           rule) -->
+      <div class="confirm-card">
+        <div class="confirm-head">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+          This needs your approval
+        </div>
+        <div class="confirm-body">
+          I'd like to delete a cache folder that's no longer needed:
+          <code>rm -rf test/finance_dashboard/__pycache__</code>
+        </div>
+        <div class="confirm-actions">
+          <button class="btn-approve">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg>
+            Approve
+          </button>
+          <button class="btn-deny">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            Deny
+          </button>
+        </div>
+      </div>
+
+      <div class="checkpoint-marker">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        Progress saved
+      </div>
+
+      <div class="msg assistant">
+        <div class="bubble">
+          Fixed — the table now scrolls horizontally within its own container instead of overflowing the page.
+          Verified at <code>375px</code>: zero overflow (was 16px before).
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Zone 4: capabilities drawer -->
+    <div class="pa-tools-drawer">
+      <div class="pa-tools-summary">
+        <span class="left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+          What I can do
+        </span>
+        <span class="count">9 areas</span>
+      </div>
+      <!-- Grouped by CAPABILITY AREA, never by raw tool name -->
+      <div class="capability-list">
+        <span class="capability-chip">Read & edit files</span>
+        <span class="capability-chip">Run commands</span>
+        <span class="capability-chip">Browser preview</span>
+        <span class="capability-chip">Web search</span>
+        <span class="capability-chip">Code search</span>
+        <span class="capability-chip">Rename & refactor</span>
+        <span class="capability-chip">Version control</span>
+        <span class="capability-chip">Image generation</span>
+        <span class="capability-chip">Code transforms</span>
+      </div>
+    </div>
+
+    <!-- Zone 5: Composer -->
+    <div class="pa-composer">
+      <div class="context-chips">
+        <span class="context-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+          style.css
+          <span class="x"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></span>
+        </span>
+        <span class="context-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v11a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-8l-2-3H5a2 2 0 00-2 2z"/></svg>
+          finance_dashboard
+          <span class="x"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6L6 18M6 6l12 12"/></svg></span>
+        </span>
+      </div>
+      <div class="composer-box">
+        <textarea class="composer-textarea" placeholder="Ask Pulse Agent to build, fix, or explain something..."></textarea>
+        <div class="composer-toolbar">
+          <div class="composer-toolbar-left">
+            <!-- Model picker shows a neutral label, not the raw provider id -->
+            <span class="mode-select">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              Fast mode
+            </span>
+            <span class="mode-select">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h7v8l10-12h-7z"/></svg>
+              Agent
+            </span>
+          </div>
+          <button class="send-btn">
+            Send
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="hint">⌘+Enter to send · Esc to stop</div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

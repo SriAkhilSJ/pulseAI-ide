@@ -1,0 +1,30 @@
+# Secrets — never commit real API keys
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Agent runtime state (optional: keep if you want to version starter memory)
+# memory.json
+
+# Automatic write_file backups (see checkpoint.py) -- local safety net only,
+# not meant to be committed or shared.
+.agent_backups/
+
+# Per-mission conversation history + progress checkpoints (see missions.py)
+# -- local working state, not meant to be committed or shared.
+.agent_missions/
+
+# Background-process registry (see process_manager.py) -- local runtime
+# state (PIDs from THIS machine), meaningless anywhere else.
+.agent_processes.json
+
+# Throwaway nested git repo created by test/git_tools_test.py on every run
+# to test git_tools.py against real git operations without ever touching
+# this project's own repo state. Recreated fresh each test run -- has its
+# own .git/ inside it, which git would otherwise treat as a submodule
+# reference (or silently ignore its tracked contents) if committed as-is.
+test/git_tools_sandbox_workdir/
+test/scratch_*/

@@ -1,0 +1,21 @@
+Summary of work completed:
+
+1. Resolved build script crashes by creating the missing `.github/copilot-instructions.md` file required by `postinstall.ts`.
+2. Cleaned up and fixed bugs in `desktop/scripts/code.bat`:
+   - Fixed the `NAMESHIRT` typo to correctly retrieve the short name.
+   - Refactored the `findstr` query to exactly target `"nameShort"` and avoid overlapping matching with `win32ShellNameShort`.
+   - Quoted `%CODE%` paths to prevent issues with folder names that contain spaces.
+3. Updated global `npm` to ensure `node-gyp@13.0.0` was present to properly handle Visual Studio 2026/2022 project compilation.
+4. Installed and ran `@electron/rebuild` to compile native binaries targeting Electron 42.6.0 (ABI 146).
+5. Compiled and placed the native `.node` libraries for the following modules:
+   - `@vscode/policy-watcher`
+   - `@vscode/sqlite3`
+   - `windows-foreground-love`
+   - `@vscode/windows-process-tree`
+   - `@vscode/windows-registry`
+   - `@parcel/watcher`
+   - `node-pty`
+   - `@vscode/spdlog`
+6. Verified that the IDE starts up and completely loads the extension host and UI via `.\scripts\code.bat`.
+
+All steps completed successfully. The IDE and its built-in Pulse Agent extension are fully operational.

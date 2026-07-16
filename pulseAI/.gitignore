@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env
+*.log
+
+# OS / Junk
+.DS_Store
+Thumbs.db
+.local/
+.sudo_as_admin_successful
+home/
+*.db
+cert9.db
+key4.db
+pkcs11.txt
+
+# Node / VS Code fork (don't commit the whole fork here)
+node_modules/
+out/
+.vscode-test/
+
+# IDE
+.vscode/
+.idea/
+.pytest_cache/
+.pulsecode/

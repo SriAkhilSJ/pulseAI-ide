@@ -1,0 +1,11 @@
+PulseCodeAI IDE is ready to run.
+
+To launch the IDE:
+1. Open a terminal (Powershell or Command Prompt) in:
+   D:\vscode_src\desktop
+2. Run the start script:
+   .\scripts\code.bat
+
+The IDE will open with the custom branding "PulseCodeAI IDE" and the Pulse Agent extension available in the Activity Bar.
+
+All native binary compilation issues (SQLite, policy watcher, foreground window helper) have been fully resolved. No environment variables need to be set manually.

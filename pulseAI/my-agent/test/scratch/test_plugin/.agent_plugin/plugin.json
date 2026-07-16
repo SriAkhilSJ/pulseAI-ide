@@ -1,0 +1,6 @@
+{
+  "name": "test-plugin",
+  "description": "A real test plugin for plugins.py's own test suite",
+  "version": "1.0.0",
+  "author": {"name": "Pulse Agent Test Suite"}
+}

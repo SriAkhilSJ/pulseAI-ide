@@ -1,0 +1,19 @@
+Build a minimalist, professional furniture e-commerce landing page as a React component,
+replacing the default Vite starter content in test/furniture_site/src/App.jsx.
+
+Plan first, then execute:
+1. A clean, minimal navigation bar (logo text "Nord", nav links: Shop, About, Contact)
+2. A hero section with a headline, short subtext, and a "Shop Now" button
+3. A "Featured Products" grid section showing at least 4 furniture items (name, price,
+   short description) as React data (an array of objects mapped to cards) -- no images needed,
+   use simple styled placeholder boxes with a background color instead
+4. A minimal footer with copyright text
+
+Requirements:
+- Single App.jsx file is fine (don't need to split into multiple component files)
+- Replace src/App.css with clean, minimal CSS (neutral color palette: whites, grays, one accent color)
+- Remove the default Vite/React boilerplate content (logos, counter button, "Documentation"/"Connect
+  with us" sections) entirely
+- After writing the files, read them back to verify the content is what you intended
+- Do NOT use run_command to start a dev server or run npm install/build -- that will be handled separately,
+  just write and verify the React/CSS source files directly

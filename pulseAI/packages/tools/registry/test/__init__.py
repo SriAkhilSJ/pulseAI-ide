@@ -1,0 +1,1 @@
+"""tests for unified registry"""

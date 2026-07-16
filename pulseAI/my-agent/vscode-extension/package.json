@@ -1,0 +1,58 @@
+{
+  "name": "pulse-agent",
+  "displayName": "Pulse Agent",
+  "description": "VS Code webview for Pulse Agent, bridged via ACP-style JSON-RPC over stdio.",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["*"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "chatParticipants": [
+      {
+        "id": "pulsecode.pulse-agent",
+        "name": "pulsecode-ai",
+        "fullName": "PulseCode AI Agent",
+        "description": "Autonomous AI coding agent",
+        "isSticky": true,
+        "locations": ["panel"]
+      }
+    ],
+    "commands": [
+      {
+        "command": "pulseAgent.run",
+        "title": "Pulse Agent: Ask..."
+      },
+      {
+        "command": "pulseAgent.newSession",
+        "title": "Pulse Agent: New Session"
+      }
+    ],
+    "configuration": {
+      "title": "Pulse Agent",
+      "properties": {
+        "pulseAgent.pythonPath": {
+          "type": "string",
+          "default": "python3",
+          "description": "Path to the Python interpreter used to run bridge_server.py."
+        },
+        "pulseAgent.agentRoot": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the my-agent project root (containing bridge_server.py). Defaults to the first workspace folder if empty."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.4.0"
+  }
+}

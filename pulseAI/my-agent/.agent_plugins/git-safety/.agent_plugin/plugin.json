@@ -1,0 +1,7 @@
+{
+  "name": "git-safety",
+  "description": "A real, permanent example plugin: a commit-message skill, a /changelog command, and a PreToolUse hook that blocks 'git push --force' to protected branches.",
+  "version": "1.0.0",
+  "author": {"name": "Pulse Agent"},
+  "keywords": ["git", "safety", "example"]
+}

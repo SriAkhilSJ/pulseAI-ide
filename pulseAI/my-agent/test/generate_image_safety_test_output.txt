@@ -1,0 +1,2 @@
+ERROR: refusing to write image to sensitive path '.env'.
+ERROR: invalid output_path: Refusing to access path outside working directory: ../../etc/passwd

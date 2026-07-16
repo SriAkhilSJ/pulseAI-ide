@@ -1,0 +1,4 @@
+[[90m02:42:05[39m] Synchronizing built-in extensions...
+[[90m02:42:05[39m] You can manage built-in extensions with the [36m--builtin[39m flag
+'.build\electron\' is not recognized as an internal or external command,
+operable program or batch file.

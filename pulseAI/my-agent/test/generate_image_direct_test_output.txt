@@ -1,0 +1,3 @@
+=== generate_image direct test ===
+OK: generated image saved to test/banner_direct_test.jpg (8.5 KB, image/jpeg). (NOTE: saved as 'banner_direct_test.jpg' not 'banner_direct_test.png' -- the API returned image/jpeg, not the format implied by the requested filename's extension.)
+Prompt used: 'professional abstract tech banner, blue gradient, minimalist, wide format'

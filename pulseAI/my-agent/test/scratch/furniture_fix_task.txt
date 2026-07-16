@@ -1,0 +1,17 @@
+The furniture site at test/furniture_site/src/App.jsx and test/furniture_site/src/App.css
+was recently rewritten but the visual result may not match the intended design.
+
+Use test_local_html or another browser-based verification tool to actually render
+test/furniture_site/dist/index.html (a production build already exists at
+test/furniture_site/dist/) and check whether the page looks like a styled furniture
+landing page (horizontal nav bar, centered hero, product cards in a grid with gray
+placeholder boxes, minimal footer) or whether it looks unstyled (raw bullet points,
+no visual structure, plain black text).
+
+If it looks unstyled, investigate why (read the relevant source files) and fix the
+root cause with apply_edit or write_file. Then rebuild the project by running
+`npm run build` inside test/furniture_site (via run_command, with cwd handled by
+prefixing the command appropriately, e.g. `cd test/furniture_site && npm run build`).
+After rebuilding, use test_local_html again on the newly-rebuilt dist/index.html to
+confirm the fix actually worked visually, not just that the build succeeded without
+errors.

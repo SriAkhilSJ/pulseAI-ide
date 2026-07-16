@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PulseAI Studio — Multi-Agent Command Center</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Navigation Header -->
+        <header class="studio-header">
+            <div class="logo-group">
+                <div class="pulse-spark">⚡</div>
+                <h1 id="title">PulseAI Studio</h1>
+                <span class="version-badge">v2.0 Monorepo Engine</span>
+            </div>
+            <div class="status-bar">
+                <div class="status-pill active">
+                    <span class="indicator"></span>
+                    <span>Multi-Agent Core: ACTIVE</span>
+                </div>
+                <div class="status-pill">
+                    <span>Model: <strong id="active-model">Groq Llama 3 70B</strong></span>
+                </div>
+                <div class="status-pill">
+                    <span>Tokens: <strong id="token-count">1,420 / 128,000</strong></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Workspace Layout -->
+        <main class="workspace-grid">
+            <!-- Left Panel: Multi-Agent Pipeline Visualization -->
+            <section class="panel pipeline-panel">
+                <div class="panel-header">
+                    <h2>🤖 Autonomous Pipeline Roles</h2>
+                    <button id="reset-pipeline-btn" class="btn-secondary">Reset Pipeline</button>
+                </div>
+                <div class="pipeline-cards">
+                    <div class="agent-card completed" data-role="Planner">
+                        <div class="card-top">
+                            <h3>📋 Planner Agent</h3>
+                            <span class="status-tag">DONE</span>
+                        </div>
+                        <p>Analyzed workspace AST. Generated 5-step implementation plan with zero mutating calls.</p>
+                        <div class="tool-list">
+                            <code>grep_files</code> <code>repo_map_query</code>
+                        </div>
+                    </div>
+
+                    <div class="agent-card active" data-role="Coder">
+                        <div class="card-top">
+                            <h3>⚡ Coder Agent</h3>
+                            <span class="status-tag pulse">RUNNING</span>
+                        </div>
+                        <p>Applying surgical AST modifications via sandboxed filesystem tools with live LSP verification.</p>
+                        <div class="tool-list">
+                            <code>filesystem_write_file</code> <code>lsp_get_diagnostics</code>
+                        </div>
+                    </div>
+
+                    <div class="agent-card pending" data-role="Reviewer">
+                        <div class="card-top">
+                            <h3>🔍 Reviewer Agent</h3>
+                            <span class="status-tag">WAITING</span>
+                        </div>
+                        <p>Pre-commit vulnerability scanner (SQLi, null safety, memory leak inspection).</p>
+                        <div class="tool-list">
+                            <code>git_diff</code> <code>grep_files</code>
+                        </div>
+                    </div>
+
+                    <div class="agent-card pending" data-role="Tester">
+                        <div class="card-top">
+                            <h3>🧪 Tester & Debugger</h3>
+                            <span class="status-tag">WAITING</span>
+                        </div>
+                        <p>Executes automated unit tests (`RED -> GREEN -> REFACTOR`) and traces root causes across call stacks.</p>
+                        <div class="tool-list">
+                            <code>run_command</code> <code>lsp_find_references</code>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Center Panel: Live Agent ReAct Loop & Console -->
+            <section class="panel console-panel">
+                <div class="panel-header">
+                    <h2>⚡ Real-Time ReAct Loop Console</h2>
+                    <div class="controls-right">
+                        <select id="mode-selector" class="dropdown">
+                            <option value="normal">Mode: Normal (Confirm Mutating)</option>
+                            <option value="plan">Mode: Plan Only (Read-Only)</option>
+                            <option value="dont_ask">Mode: Don't Ask (Automated)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="console-viewport" class="console-viewport">
+                    <div class="log-entry system">
+                        <span class="timestamp">[20:55:12]</span>
+                        <span class="msg">Initialized PulseCodeAI UnifiedToolRegistry with 19 sandboxed tools.</span>
+                    </div>
+                    <div class="log-entry user">
+                        <span class="timestamp">[20:55:14]</span>
+                        <span class="msg">@pulse /feature Create SQLite FTS5 cross-session memory engine with WAL concurrency.</span>
+                    </div>
+                    <div class="log-entry assistant">
+                        <span class="timestamp">[20:55:15]</span>
+                        <span class="msg"><strong>Thought:</strong> I must first check existing database tools and verify path traversal boundaries using `PathGuard`.</span>
+                    </div>
+                    <div class="log-entry tool-call">
+                        <span class="timestamp">[20:55:16]</span>
+                        <span class="msg">🛠️ <strong>Tool Call:</strong> <code>filesystem_read_file(path="packages/ai-core/memory/src/fts_memory.py")</code></span>
+                    </div>
+                    <div class="log-entry tool-obs">
+                        <span class="timestamp">[20:55:17]</span>
+                        <span class="msg">✓ <strong>Observation:</strong> File loaded cleanly. WAL mode enabled (`PRAGMA journal_mode=WAL;`).</span>
+                    </div>
+                </div>
+
+                <div class="console-input-bar">
+                    <input type="text" id="prompt-input" placeholder="Enter custom prompt or type @pulse /plan ...">
+                    <button id="dispatch-btn" class="btn-primary">Dispatch Mission</button>
+                </div>
+            </section>
+
+            <!-- Right Panel: FTS5 Memory Search & RAG Context Map -->
+            <section class="panel memory-panel">
+                <div class="panel-header">
+                    <h2>🧠 SQLite FTS5 Memory & RAG</h2>
+                </div>
+                <div class="memory-search-box">
+                    <input type="text" id="memory-query" placeholder="Search historical architectural notes...">
+                    <button id="search-memory-btn" class="btn-secondary">Search</button>
+                </div>
+                <div id="memory-results" class="memory-results">
+                    <div class="note-card">
+                        <span class="note-tag auth">AUTH DECISION</span>
+                        <p>Migrated session validation to JWT tokens with 15-minute expiry across distributed agent sessions.</p>
+                        <span class="note-time">Session ID: mission-session-042</span>
+                    </div>
+                    <div class="note-card">
+                        <span class="note-tag db">DATABASE ARCHITECTURE</span>
+                        <p>Configured SQLite WAL mode (`PRAGMA journal_mode=WAL;`) inside ConversationMemory to support concurrent parallel agent writes.</p>
+                        <span class="note-time">Session ID: mission-session-044</span>
+                    </div>
+                </div>
+
+                <div class="rag-stats">
+                    <h3>📊 RAG Codebase Index Stats</h3>
+                    <ul>
+                        <li><strong>Workspace Root:</strong> `/home/user/pulseAI_repo`</li>
+                        <li><strong>Indexed Files:</strong> 32 Python/JS/MD modules</li>
+                        <li><strong>AST Definitions:</strong> 114 classes & functions</li>
+                        <li><strong>Embedding Engine:</strong> Local ONNX / MiniLM-L6-v2</li>
+                    </ul>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="app.js"></script>
+    <!-- PULSE_STUDIO_E2E_VERIFIED -->
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "run_command",
+        "hooks": [{"type": "command", "command": "python3 -c \"import sys, json; d=json.load(sys.stdin); print(json.dumps({'decision':'block','reason':'test plugin blocked this'}) if 'forbidden' in d.get('tool_args',{}).get('cmd','') else '')\""}]
+      }
+    ]
+  }
+}
