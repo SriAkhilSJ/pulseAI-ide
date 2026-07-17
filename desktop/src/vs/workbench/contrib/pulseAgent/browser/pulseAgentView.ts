@@ -43,6 +43,9 @@ export class PulseAgentView extends ViewPane {
 	private logArea: HTMLElement | undefined;
 	private footerElement: HTMLElement | undefined;
 	private inputElement: HTMLInputElement | undefined;
+	private statusDot: HTMLElement | undefined;
+	private statusText: HTMLElement | undefined;
+	private ws: WebSocket | null = null;
 
 	private elapsedTimer: ReturnType<typeof setInterval> | undefined;
 	private elapsedSeconds: number = 0;
@@ -101,17 +104,18 @@ export class PulseAgentView extends ViewPane {
 		titleText.style.textTransform = 'uppercase';
 
 		// Status indicator
-		const statusDot = append(labelContainer, $('span'));
+		this.statusDot = append(labelContainer, $('span'));
+		const statusDot = this.statusDot;
 		statusDot.style.width = '6px';
 		statusDot.style.height = '6px';
 		statusDot.style.borderRadius = '50%';
 		statusDot.style.background = '#4caf50';
 		statusDot.style.marginLeft = 'auto';
 
-		const statusText = append(labelContainer, $('span'));
-		statusText.textContent = localize('pulseAgent.status.ready', 'Ready');
-		statusText.style.color = '#888888';
-		statusText.style.fontSize = '11px';
+		this.statusText = append(labelContainer, $('span'));
+		this.statusText.textContent = localize('pulseAgent.status.disconnected', 'Disconnected');
+		this.statusText.style.color = '#e74c3c';
+		this.statusText.style.fontSize = '11px';
 
 		// ── Thinking / Log Area (scrollable) ──
 		const logContainer = append(this.bodyElement, $('.pulse-agent-log-container'));
@@ -179,6 +183,9 @@ export class PulseAgentView extends ViewPane {
 		this.bodyElement.style.flexDirection = 'column';
 		this.bodyElement.style.height = '100%';
 		this.bodyElement.style.background = '#1e1e1e';
+
+		// Connect to Python backend
+		this.connectToAgentBackend();
 	}
 
 	protected override layoutBody(height: number, width: number): void {
@@ -253,14 +260,76 @@ export class PulseAgentView extends ViewPane {
 	}
 
 	private _onSubmit(text: string): void {
-		this._addLogEntry(`▸ ${text}`, '#bb86fc');
-		this.startThinking();
+		if (!this.inputElement) {
+			return;
+		}
+
+		// Show the user's message in the log
+		this._addLogEntry(`> ${text}`, '#80cbc4');
+
+		// Send via WebSocket if open
+		if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+			this.ws.send(text);
+			this.inputElement.value = '';
+		} else {
+			this._addLogEntry('[disconnected] Cannot reach agent backend', '#e74c3c');
+		}
+	}
+
+	// ─── WebSocket ──────────────────────────────────────────────────
+
+	private connectToAgentBackend(): void {
+		try {
+			this.ws = new WebSocket('ws://localhost:8765');
+		} catch {
+			this._addLogEntry('[error] Failed to create WebSocket', '#e74c3c');
+			return;
+		}
+
+		this.ws.onopen = () => {
+			if (this.statusText) {
+				this.statusText.textContent = localize('pulseAgent.status.ready', 'Ready');
+				this.statusText.style.color = '#4caf50';
+			}
+			if (this.statusDot) {
+				this.statusDot.style.background = '#4caf50';
+			}
+			this._addLogEntry('[connected] Pulse Agent backend online', '#4caf50');
+		};
+
+		this.ws.onmessage = (event: MessageEvent) => {
+			this.stopThinking();
+			const data = typeof event.data === 'string' ? event.data : String(event.data);
+			this._addLogEntry(data, '#e0e0e0');
+		};
+
+		this.ws.onerror = () => {
+			this._addLogEntry('[error] WebSocket error', '#e74c3c');
+		};
+
+		this.ws.onclose = () => {
+			if (this.statusText) {
+				this.statusText.textContent = localize('pulseAgent.status.disconnected', 'Disconnected');
+				this.statusText.style.color = '#e74c3c';
+			}
+			if (this.statusDot) {
+				this.statusDot.style.background = '#e74c3c';
+			}
+			this._addLogEntry('[disconnected] Agent backend offline', '#e74c3c');
+			// Auto-reconnect after 3 seconds
+			setTimeout(() => this.connectToAgentBackend(), 3000);
+		};
 	}
 
 	// ─── Dispose ───────────────────────────────────────────────────────
 
 	override dispose(): void {
 		this.stopThinking();
+		if (this.ws) {
+			this.ws.onclose = null; // prevent auto-reconnect on dispose
+			this.ws.close();
+			this.ws = null;
+		}
 		super.dispose();
 	}
 }
