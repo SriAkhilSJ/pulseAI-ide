@@ -476,4 +476,7 @@ import './contrib/editTelemetry/browser/editTelemetry.contribution.js';
 // Opener
 import './contrib/opener/browser/opener.contribution.js';
 
+// PulseCode AI Agent
+import './contrib/pulseAgent/browser/pulseAgent.contribution.js';
+
 //#endregion
