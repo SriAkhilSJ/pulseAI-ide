@@ -46,6 +46,8 @@ export class PulseAgentView extends ViewPane {
 	private statusDot: HTMLElement | undefined;
 	private statusText: HTMLElement | undefined;
 	private ws: WebSocket | null = null;
+	private reconnectDelay: number = 1000;
+	private disposed: boolean = false;
 
 	private elapsedTimer: ReturnType<typeof setInterval> | undefined;
 	private elapsedSeconds: number = 0;
@@ -287,6 +289,7 @@ export class PulseAgentView extends ViewPane {
 		}
 
 		this.ws.onopen = () => {
+			this.reconnectDelay = 1000; // reset backoff on success
 			if (this.statusText) {
 				this.statusText.textContent = localize('pulseAgent.status.ready', 'Ready');
 				this.statusText.style.color = '#4caf50';
@@ -304,10 +307,13 @@ export class PulseAgentView extends ViewPane {
 		};
 
 		this.ws.onerror = () => {
-			this._addLogEntry('[error] WebSocket error', '#e74c3c');
+			// silently ignored — onclose handles reconnect
 		};
 
 		this.ws.onclose = () => {
+			if (this.disposed) {
+				return;
+			}
 			if (this.statusText) {
 				this.statusText.textContent = localize('pulseAgent.status.disconnected', 'Disconnected');
 				this.statusText.style.color = '#e74c3c';
@@ -315,15 +321,17 @@ export class PulseAgentView extends ViewPane {
 			if (this.statusDot) {
 				this.statusDot.style.background = '#e74c3c';
 			}
-			this._addLogEntry('[disconnected] Agent backend offline', '#e74c3c');
-			// Auto-reconnect after 3 seconds
-			setTimeout(() => this.connectToAgentBackend(), 3000);
+			this._addLogEntry(`[disconnected] Agent offline — retry in ${this.reconnectDelay / 1000}s`, '#e74c3c');
+			const delay = this.reconnectDelay;
+			this.reconnectDelay = Math.min(this.reconnectDelay * 2, 30000);
+			setTimeout(() => this.connectToAgentBackend(), delay);
 		};
 	}
 
 	// ─── Dispose ───────────────────────────────────────────────────────
 
 	override dispose(): void {
+		this.disposed = true;
 		this.stopThinking();
 		if (this.ws) {
 			this.ws.onclose = null; // prevent auto-reconnect on dispose
