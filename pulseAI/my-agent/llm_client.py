@@ -55,8 +55,8 @@ load_dotenv(override=False)
 # explicitly support tool/function calling, which matters once this feeds
 # the agent's ReAct loop.
 FALLBACK_CHAIN = [
-    "groq/llama-3.3-70b-versatile",          # fast, free, supports tools
-    "gemini/gemini-2.5-flash",               # Google, free tier, supports tools
+    "gemini/gemini-2.5-flash",               # Google, free tier, 1M context, supports tools
+    "groq/llama-3.3-70b-versatile",          # fast, free, supports tools (12K TPM limit)
     "cerebras/gpt-oss-120b",                 # Cerebras, free tier, supports tools
     "openrouter/openai/gpt-oss-120b:free",   # OpenRouter, free tier, supports tools
 ]
@@ -65,8 +65,8 @@ FALLBACK_CHAIN = [
 def ask_llm(prompt: str, model: Optional[str] = None, _chain: Optional[list] = None) -> str:
     """
     Just change the model string to switch providers:
-      - "groq/llama-3.3-70b-versatile"        (fast, free)
-      - "gemini/gemini-2.5-flash"             (Google, free tier)
+      - "gemini/gemini-2.5-flash"             (Google, free tier, 1M context)
+      - "groq/llama-3.3-70b-versatile"        (fast, free, 12K TPM limit)
       - "cerebras/gpt-oss-120b"               (Cerebras, free tier, very fast)
       - "openrouter/openai/gpt-oss-120b:free" (OpenRouter, free tier)
 
@@ -119,6 +119,15 @@ def _build_router() -> Router:
     model_list = []
     order: list[str] = []  # preserves priority: first configured = tried first
 
+    if os.getenv("GOOGLE_API_KEY"):
+        model_list.append({
+            "model_name": "gemini-agent",
+            "litellm_params": {
+                "model": "gemini/gemini-2.5-flash",
+                "api_key": os.getenv("GOOGLE_API_KEY"),
+            },
+        })
+        order.append("gemini-agent")
     if os.getenv("GROQ_API_KEY"):
         model_list.append({
             "model_name": "groq-agent",
@@ -150,15 +159,6 @@ def _build_router() -> Router:
             },
         })
         order.append("nvidia-agent")
-    if os.getenv("GOOGLE_API_KEY"):
-        model_list.append({
-            "model_name": "gemini-agent",
-            "litellm_params": {
-                "model": "gemini/gemini-2.5-flash",
-                "api_key": os.getenv("GOOGLE_API_KEY"),
-            },
-        })
-        order.append("gemini-agent")
     if os.getenv("CEREBRAS_API_KEY"):
         model_list.append({
             "model_name": "cerebras-agent",
@@ -187,7 +187,7 @@ def _build_router() -> Router:
             "environment variable before starting the agent."
         )
 
-    # Explicit fallback chain: groq -> gemini -> cerebras -> openrouter (in
+    # Explicit fallback chain: gemini -> groq -> nvidia -> cerebras -> openrouter (in
     # whatever order the configured keys give us). Each entry says "if THIS
     # model_group's retries are exhausted, move to these model_groups next".
     # Built as a chain (each provider falls back to everything after it) so

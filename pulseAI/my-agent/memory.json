@@ -19,6 +19,26 @@
     {
       "user": "say hi in one word",
       "assistant": "[INTERRUPTED before completion: AuthenticationError: litellm.AuthenticationError: AuthenticationError: OpenrouterException - {\"error\":{\"message\":\"User not found.\",\"code\":401}}. Received Model Group=openrouter-agent\nAvailable Model Group Fallbacks=None] Some tool calls in this turn may have already run for real (e.g. files may have been written) even though the task did not finish -- check the actions above/on disk rather than assuming nothing happened."
+    },
+    {
+      "user": "hi",
+      "assistant": "I had to stop because every configured LLM provider was too slow or rate-limited to respond within the timeout window (90s). This usually means a provider hit a long rate-limit cooldown (minutes, not seconds). I completed 0 step(s) before this happened. Wait a bit and retry, or check which provider is rate-limited."
+    },
+    {
+      "user": "say hi in one word",
+      "assistant": "I had to stop because every configured LLM provider was too slow or rate-limited to respond within the timeout window (90s). This usually means a provider hit a long rate-limit cooldown (minutes, not seconds). I completed 0 step(s) before this happened. Wait a bit and retry, or check which provider is rate-limited."
+    },
+    {
+      "user": "say hi in one word",
+      "assistant": "I had to stop because every configured LLM provider was too slow or rate-limited to respond within the timeout window (90s). This usually means a provider hit a long rate-limit cooldown (minutes, not seconds). I completed 0 step(s) before this happened. Wait a bit and retry, or check which provider is rate-limited."
+    },
+    {
+      "user": "say hi in one word",
+      "assistant": "Hi!"
+    },
+    {
+      "user": "say hi in one word",
+      "assistant": "Hi!"
     }
   ],
   "notes": []
