@@ -297,23 +297,101 @@ export class PulseAgentView extends ViewPane {
 	}
 
 	/**
-	 * Render the final AI reply as a highlighted chat bubble.
+	 * Render the final AI reply as a highlighted chat bubble,
+	 * parsing markdown code blocks into styled containers with
+	 * an "Apply to Editor" button.
 	 */
 	private _renderReply(text: string): void {
 		if (!this.logArea) {
 			return;
 		}
 		const entry = append(this.logArea, $('div'));
-		entry.textContent = text;
 		entry.style.padding = '8px 12px';
-		entry.style.margin = '6px 0';
+		entry.style.margin = '8px 0';
 		entry.style.backgroundColor = '#252526';
 		entry.style.borderLeft = '3px solid #e74c3c';
 		entry.style.borderRadius = '0 4px 4px 0';
 		entry.style.color = '#e0e0e0';
-		entry.style.whiteSpace = 'pre-wrap';
 		entry.style.wordBreak = 'break-word';
-		entry.style.lineHeight = '1.5';
+
+		// Split text by markdown code blocks (```)
+		const blocks = text.split('```');
+
+		for (let i = 0; i < blocks.length; i++) {
+			if (i % 2 === 0) {
+				// Normal text segment
+				const span = document.createElement('span');
+				span.style.whiteSpace = 'pre-wrap';
+				span.textContent = blocks[i];
+				entry.appendChild(span);
+			} else {
+				// Code block
+				const lines = blocks[i].split('\n');
+				const lang = lines[0].trim();
+				const code = lines.slice(1).join('\n');
+
+				const codeContainer = document.createElement('div');
+				codeContainer.style.backgroundColor = '#1e1e1e';
+				codeContainer.style.border = '1px solid #3c3c3c';
+				codeContainer.style.borderRadius = '4px';
+				codeContainer.style.marginTop = '8px';
+				codeContainer.style.marginBottom = '8px';
+				codeContainer.style.overflow = 'hidden';
+
+				const codeHeader = document.createElement('div');
+				codeHeader.style.display = 'flex';
+				codeHeader.style.justifyContent = 'space-between';
+				codeHeader.style.backgroundColor = '#2d2d2d';
+				codeHeader.style.padding = '4px 8px';
+				codeHeader.style.fontSize = '11px';
+				codeHeader.style.color = '#cccccc';
+
+				const langSpan = document.createElement('span');
+				langSpan.textContent = lang || 'code';
+
+				const applyBtn = document.createElement('button');
+				applyBtn.textContent = 'Apply to Editor';
+				applyBtn.style.backgroundColor = '#e74c3c';
+				applyBtn.style.color = 'white';
+				applyBtn.style.border = 'none';
+				applyBtn.style.borderRadius = '3px';
+				applyBtn.style.padding = '2px 6px';
+				applyBtn.style.cursor = 'pointer';
+				applyBtn.style.fontSize = '10px';
+
+				applyBtn.onclick = () => {
+					this.applyCodeToEditor(code);
+					applyBtn.textContent = 'Applied!';
+					applyBtn.style.backgroundColor = '#4caf50';
+					setTimeout(() => {
+						applyBtn.textContent = 'Apply to Editor';
+						applyBtn.style.backgroundColor = '#e74c3c';
+					}, 2000);
+				};
+
+				codeHeader.appendChild(langSpan);
+				codeHeader.appendChild(applyBtn);
+
+				const codePre = document.createElement('pre');
+				codePre.style.margin = '0';
+				codePre.style.padding = '8px';
+				codePre.style.overflowX = 'auto';
+				codePre.style.backgroundColor = '#1e1e1e';
+
+				const codeCode = document.createElement('code');
+				codeCode.textContent = code;
+				codeCode.style.fontFamily = 'var(--vscode-editor-font-family)';
+				codeCode.style.fontSize = '12px';
+
+				codePre.appendChild(codeCode);
+				codeContainer.appendChild(codeHeader);
+				codeContainer.appendChild(codePre);
+
+				entry.appendChild(codeContainer);
+			}
+		}
+
+		this.logArea.appendChild(entry);
 		this.logArea.scrollTop = this.logArea.scrollHeight;
 	}
 
@@ -334,6 +412,35 @@ export class PulseAgentView extends ViewPane {
 			return { filename, text };
 		}
 		return null;
+	}
+
+	/**
+	 * Insert code into the currently active editor at the cursor position.
+	 */
+	private applyCodeToEditor(code: string): void {
+		const activeTextEditorControl = this.editorService.activeTextEditorControl;
+		if (!activeTextEditorControl) {
+			this._addLogEntry('[error] No active text editor found', '#e74c3c');
+			return;
+		}
+
+		const editor = activeTextEditorControl as any;
+		if (typeof editor.executeEdits === 'function' && typeof editor.getPosition === 'function') {
+			const position = editor.getPosition();
+			editor.executeEdits('pulseAgent', [{
+				range: {
+					startLineNumber: position.lineNumber,
+					startColumn: position.column,
+					endLineNumber: position.lineNumber,
+					endColumn: position.column
+				},
+				text: code,
+				forceMoveMarkers: true
+			}]);
+			editor.focus();
+		} else {
+			this._addLogEntry('[error] Editor does not support executeEdits', '#e74c3c');
+		}
 	}
 
 	private _onSubmit(text: string): void {
