@@ -5,12 +5,14 @@ Thin WebSocket-to-stdio bridge.
 
 Listens on ws://localhost:8765, spawns bridge_server.py as a child process,
 and proxies messages between the WebSocket client and the subprocess.
+  WS client sends:     "hello world"                       (plain text, backward compat)
+                       {"type":"user_message","message":"...","context":"..."}  (new JSON payload)
 
-  WS client sends:     "hello world"           (plain text)
   WS client receives:  {"type":"log",...}       (newline-delimited JSON from bridge_server.py)
 
 Wire format mapping:
-  WS text  ->  {"type":"run","id":"<uuid>","input":"<text>"}\\n  (-> bridge stdin)
+  WS text (plain)  ->  {"type":"run","id":"<uuid>","input":"<text>"}\\n         (-> bridge stdin)
+  WS text (JSON)   ->  unpacked, context appended, then same run protocol
   bridge stdout (lines)  ->  WS text messages  (-> client)
 """
 
@@ -81,9 +83,28 @@ async def handler(ws) -> None:
             if not text:
                 continue
 
-            # Wrap plain text into the bridge_server run protocol
+            # Accept either a plain string OR a JSON payload from the
+            # extension.  The new extension sends:
+            #   {"type":"user_message","message":"...","context":"..."}
+            # Plain strings are still handled for backward compat.
+            user_message = text
+            extra_context = None
+            if text.startswith("{"):
+                try:
+                    payload = json.loads(text)
+                    if isinstance(payload, dict) and payload.get("type") == "user_message":
+                        user_message = payload.get("message", text)
+                        extra_context = payload.get("context")
+                except json.JSONDecodeError:
+                    pass  # not JSON, treat as plain text
+
+            # Build the run payload for bridge_server.py
             request_id = str(uuid.uuid4())
-            msg = json.dumps({"type": "run", "id": request_id, "input": text})
+            bridge_input = user_message
+            if extra_context:
+                bridge_input = f"{user_message}\n\n[Editor Context]\n{extra_context}"
+
+            msg = json.dumps({"type": "run", "id": request_id, "input": bridge_input})
 
             try:
                 proc.stdin.write((msg + "\n").encode("utf-8"))

@@ -15,6 +15,7 @@ import { IThemeService } from '../../../../platform/theme/common/themeService.js
 import { IViewPaneOptions, ViewPane } from '../../../browser/parts/views/viewPane.js';
 import { IViewDescriptorService } from '../../../common/views.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
+import { IEditorService } from '../../../services/editor/common/editorService.js';
 
 export const PulseAgentViewId = 'workbench.view.pulseAgent';
 
@@ -63,6 +64,7 @@ export class PulseAgentView extends ViewPane {
 		@IOpenerService openerService: IOpenerService,
 		@IThemeService themeService: IThemeService,
 		@IHoverService hoverService: IHoverService,
+		@IEditorService private readonly editorService: IEditorService,
 	) {
 		super(options, keybindingService, contextMenuService, configurationService, contextKeyService, viewDescriptorService, instantiationService, openerService, themeService, hoverService);
 	}
@@ -315,6 +317,25 @@ export class PulseAgentView extends ViewPane {
 		this.logArea.scrollTop = this.logArea.scrollHeight;
 	}
 
+	/**
+	 * Grab the text content and filename of the currently active editor.
+	 */
+	private getActiveEditorContext(): { filename: string; text: string } | null {
+		const activeTextEditorControl = this.editorService.activeTextEditorControl;
+		if (!activeTextEditorControl) {
+			return null;
+		}
+
+		const editorModel = (activeTextEditorControl as any).getModel();
+		if (editorModel && typeof (editorModel as any).getValue === 'function') {
+			const text = (editorModel as any).getValue();
+			const uri = (editorModel as any).uri;
+			const filename = uri ? uri.path.split('/').pop() : 'unknown';
+			return { filename, text };
+		}
+		return null;
+	}
+
 	private _onSubmit(text: string): void {
 		if (!this.inputElement) {
 			return;
@@ -328,7 +349,17 @@ export class PulseAgentView extends ViewPane {
 
 		// Send via WebSocket if open
 		if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-			this.ws.send(text);
+			const context = this.getActiveEditorContext();
+
+			const payload = {
+				type: 'user_message',
+				message: text,
+				context: context
+					? `The user currently has a file named '${context.filename}' open with the following content:\n\n${context.text}`
+					: null
+			};
+
+			this.ws.send(JSON.stringify(payload));
 			this.inputElement.value = '';
 		} else {
 			this.stopThinking();

@@ -39,6 +39,42 @@
     {
       "user": "say hi in one word",
       "assistant": "Hi!"
+    },
+    {
+      "user": "hi",
+      "assistant": "Hi!"
+    },
+    {
+      "user": "hello",
+      "assistant": "Hello!"
+    },
+    {
+      "user": "?",
+      "assistant": "Do you have a task for me?"
+    },
+    {
+      "user": "hi",
+      "assistant": "Hi!"
+    },
+    {
+      "user": "hi",
+      "assistant": "Hi!"
+    },
+    {
+      "user": "hi",
+      "assistant": "Hi!"
+    },
+    {
+      "user": "hiugy",
+      "assistant": "I'm sorry, I don't understand \"hiugy\". Could you please clarify or provide a different input?"
+    },
+    {
+      "user": "who are u",
+      "assistant": "I am a large language model, trained by Google."
+    },
+    {
+      "user": "hi",
+      "assistant": "Hi!"
     }
   ],
   "notes": []
