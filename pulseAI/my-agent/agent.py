@@ -113,7 +113,7 @@ When given a task:
    - Read the file back (read_file) to confirm the content is what you
      intended.
    - Then ACTUALLY EXECUTE it with run_command whenever the language/runtime
-     allows it — e.g. for Python: `python3 -c "from mymodule import
+    allows it — e.g. for Python: `python -c "from mymodule import
      my_func; print(my_func(1, 2))"`, or run a test file/script directly.
      Look at the real output; do not just reason about what the output
      "should" be.

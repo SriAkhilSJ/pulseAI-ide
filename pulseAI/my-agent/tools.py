@@ -22,7 +22,23 @@ from pathlib import Path
 from checkpoint import CheckpointManager
 import process_manager
 
-# Directory the agent is allowed to touch. Prevents "read_file('/etc/passwd')"
+
+def _kill_process_group(proc):
+    """Kill a process and its whole process group, cross-platform.
+
+    On Unix (start_new_session=True), the shell is its own group leader,
+    so os.killpg terminates it AND all its children. On Windows,
+    os.killpg does not exist, so we fall back to proc.kill().
+    """
+    try:
+        os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+    except AttributeError:
+        proc.kill()       # Windows: no os.killpg
+    except (ProcessLookupError, PermissionError):
+        proc.kill()       # already gone or unsignalable
+
+
+# Directory the agent is allowed to touch.
 # type shenanigans by resolving everything relative to where the agent runs.
 WORKDIR = Path.cwd()
 
@@ -515,10 +531,7 @@ def run_command(cmd: str, timeout: int = 30, on_line=None) -> str:
         try:
             returncode = proc.wait(timeout=timeout)
         except subprocess.TimeoutExpired:
-            try:
-                os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
-            except (ProcessLookupError, PermissionError):
-                proc.kill()  # fallback -- process (group) already gone or unsignalable
+            _kill_process_group(proc)
             proc.wait()
             reader_thread.join(timeout=2)
             output = "\n".join(collected).strip() or "(no output)"
@@ -810,7 +823,7 @@ TOOL_SPECS = [
                 "properties": {
                     "cmd": {
                         "type": "string",
-                        "description": "The shell command to run in the background (e.g. 'python3 app.py').",
+                        "description": "The shell command to run in the background (e.g. 'python app.py').",
                     },
                     "name": {
                         "type": "string",
