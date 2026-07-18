@@ -219,7 +219,16 @@ export class PulseAgentView extends ViewPane {
 	 */
 	startThinking(): void {
 		this.elapsedSeconds = 0;
-		this.clearLogs();
+
+		// Remove the static 'Thinking...' placeholder if present
+		if (this.logArea) {
+			const firstChild = this.logArea.firstElementChild;
+			if (firstChild && firstChild.textContent?.trim() === 'Thinking...') {
+				this.logArea.removeChild(firstChild);
+			}
+		}
+
+		// Add the timed "Thinking... Xs" entry
 		this._addLogEntry(`Thinking... ${this.elapsedSeconds}s`, '#9e9e9e');
 
 		this.elapsedTimer = setInterval(() => {
@@ -257,7 +266,52 @@ export class PulseAgentView extends ViewPane {
 		if (color) {
 			entry.style.color = color;
 		}
-		// Auto-scroll to bottom
+		this.logArea.scrollTop = this.logArea.scrollHeight;
+	}
+
+	/**
+	 * Append a line to an existing command-output block, or create one.
+	 */
+	private _appendCommandOutput(line: string): void {
+		if (!this.logArea) {
+			return;
+		}
+		const lastChild = this.logArea.lastElementChild as HTMLElement | null;
+		if (lastChild && lastChild.dataset?.isCommandOutput) {
+			lastChild.textContent += `\n${line}`;
+		} else {
+			const block = append(this.logArea, $('div'));
+			block.textContent = line;
+			block.style.padding = '2px 12px';
+			block.style.color = '#b5cea8';
+			block.style.fontFamily = 'var(--vscode-editor-font-family)';
+			block.style.fontSize = '11px';
+			block.style.whiteSpace = 'pre-wrap';
+			block.style.wordBreak = 'break-word';
+			block.style.backgroundColor = '#1e1e1e';
+			block.dataset.isCommandOutput = 'true';
+		}
+		this.logArea.scrollTop = this.logArea.scrollHeight;
+	}
+
+	/**
+	 * Render the final AI reply as a highlighted chat bubble.
+	 */
+	private _renderReply(text: string): void {
+		if (!this.logArea) {
+			return;
+		}
+		const entry = append(this.logArea, $('div'));
+		entry.textContent = text;
+		entry.style.padding = '8px 12px';
+		entry.style.margin = '6px 0';
+		entry.style.backgroundColor = '#252526';
+		entry.style.borderLeft = '3px solid #e74c3c';
+		entry.style.borderRadius = '0 4px 4px 0';
+		entry.style.color = '#e0e0e0';
+		entry.style.whiteSpace = 'pre-wrap';
+		entry.style.wordBreak = 'break-word';
+		entry.style.lineHeight = '1.5';
 		this.logArea.scrollTop = this.logArea.scrollHeight;
 	}
 
@@ -269,11 +323,15 @@ export class PulseAgentView extends ViewPane {
 		// Show the user's message in the log
 		this._addLogEntry(`> ${text}`, '#80cbc4');
 
+		// Start the thinking timer
+		this.startThinking();
+
 		// Send via WebSocket if open
 		if (this.ws && this.ws.readyState === WebSocket.OPEN) {
 			this.ws.send(text);
 			this.inputElement.value = '';
 		} else {
+			this.stopThinking();
 			this._addLogEntry('[disconnected] Cannot reach agent backend', '#e74c3c');
 		}
 	}
@@ -302,8 +360,38 @@ export class PulseAgentView extends ViewPane {
 
 		this.ws.onmessage = (event: MessageEvent) => {
 			this.stopThinking();
-			const data = typeof event.data === 'string' ? event.data : String(event.data);
-			this._addLogEntry(data, '#e0e0e0');
+			const rawData = typeof event.data === 'string' ? event.data : String(event.data);
+
+			try {
+				const parsed = JSON.parse(rawData);
+
+				if (parsed.type === 'ready') {
+					return;
+				}
+
+				if (parsed.type === 'log') {
+					// Render agent 'thinking' steps in a subtle gray
+					const stepText = `▸ ${parsed.event}: ${parsed.payload || ''}`;
+					this._addLogEntry(stepText, '#858585');
+				} else if (parsed.type === 'result') {
+					// Render the final AI reply via the existing method
+					const replyText = parsed.reply || rawData;
+					this._renderReply(replyText);
+				} else if (parsed.type === 'command_output') {
+					this._appendCommandOutput(parsed.line);
+				} else if (parsed.type === 'error') {
+					// Render a clean error message
+					const msg = parsed.message || parsed.payload || 'An error occurred';
+					this._addLogEntry(`[error] ${msg}`, '#e74c3c');
+				} else if (parsed.type === 'metric') {
+					// ignore
+				} else {
+					this._addLogEntry(rawData, '#cccccc');
+				}
+			} catch (e) {
+				// Not JSON; render as plain text
+				this._addLogEntry(rawData, '#cccccc');
+			}
 		};
 
 		this.ws.onerror = () => {
